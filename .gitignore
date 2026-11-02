@@ -1,0 +1,25 @@
+# Generated files
+build/
+*.vcd
+*.fst
+*.vvp
+a.out
+*.out
+
+# Synthesis and place-and-route outputs
+*.json
+*.asc
+*.bin
+*.log
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+venv/
+
+# Editors and OS
+.vscode/
+.idea/
+.DS_Store
