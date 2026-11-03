@@ -20,6 +20,8 @@ module tb_mux2 ;
         switch1 = 0; switch2 = 1; sel = 1; #10;
         if (y !== 1) $display("FAIL: sel=1 gave %b", y);
         else         $display("PASS: sel=1 = %b", y);
+        // another test remaining
+        // Test 3: sel=0 should select a (switch1)
 
         $finish;
     end
