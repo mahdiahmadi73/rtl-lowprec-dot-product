@@ -1,7 +1,9 @@
 # Low-Precision Dot Product in RTL
 
-An INT8 dot product in Verilog, the core operation of neural-network inference,
-checked bit-exactly against a Python reference model.
+**How much hardware does precision cost?** An INT8 dot product in Verilog, the
+core operation of neural-network inference, verified bit-exactly against a Python
+reference model on 1024 test vectors, then synthesized at 8, 4 and 2 bits.
+Each halving of the bit width cuts the logic by about 4× (883 → 224 → 55 LUTs).
 
 ## Result
 
