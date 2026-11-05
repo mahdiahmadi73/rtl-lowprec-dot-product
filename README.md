@@ -1,53 +1,59 @@
-# Low-Precision Dot Product in RTL: Serial vs Parallel
+# Low-Precision Dot Product in RTL
 
-A small hardware project comparing two architectures for a low-precision
-(int8, and later ternary) dot product, the core operation of neural-network
-inference on edge hardware.
+An INT8 dot product in Verilog, the core operation of neural-network inference,
+checked bit-exactly against a Python reference model.
 
-> Status: work in progress. Sections marked *TODO* are filled in as the
-> project develops. The step-by-step learning record is in
-> [`learning/`](learning/README.md).
+## Result
 
-## Goal
-- Implement a dot product in two RTL architectures:
-  - **Parallel:** all multiply-accumulates at once (combinational core in a registered wrapper).
-  - **Serial:** one multiply-accumulate per clock cycle (counter, accumulator, done flag).
-- Verify both against a Python golden model.
-- Compare cycle latency, throughput, data supply per cycle and synthesis resources.
-- Study bit-flip sensitivity of the computation (int8 vs ternary).
+- `rtl/dot_parallel.v` computes `a0·w0 + a1·w1 + a2·w2 + a3·w3` for signed INT8
+  values in one clock cycle, with an 18-bit result.
+- All 1024 test vectors match the reference model, including the corner cases
+  (−128 × −128, mixed extremes, −1).
+- Latency 1 cycle, throughput 1 result per cycle (simulation).
 
-## Architecture
-*TODO*
+Why 18 bits: one product needs 16 bits (−128 × −128 = 16384), and adding four
+products needs 2 more, so the sum can never overflow.
 
-## Results
-*TODO*
+## Hardware cost vs precision
 
-All cycle counts come from simulation. Resource figures are synthesis
-estimates (Yosys / nextpnr for the iCE40 target), not measurements on a board.
-No frequency, power or energy measurements are claimed.
+The same design synthesized at 8, 4 and 2 bits per element
+(`scripts/synth_precision.sh`, Yosys for a Lattice iCE40, LUT-only):
 
-## How to run
-*TODO*
+| Precision | LUTs | Carry cells | Flip-flops |
+|---|---:|---:|---:|
+| INT8 | 883 | 14 | 19 |
+| INT4 | 224 | 9 | 11 |
+| INT2 | 55 | 4 | 7 |
 
-## Tools
-- Icarus Verilog (simulation), GTKWave (waveforms)
-- Yosys (synthesis), nextpnr-ice40 (place and route estimates)
-- Python 3 with NumPy, pytest, Matplotlib (golden model, tests, analysis)
+Halving the bit width cuts the logic by about 4×, because a multiplier grows
+with the square of its width. The flip-flops only hold the result, so they
+shrink linearly (18, 10 and 6 bits plus a valid flag). These are synthesis
+estimates, not board measurements.
 
-Installed via [OSS CAD Suite](https://github.com/YosysHQ/oss-cad-suite-build).
+## Run
 
-## Repository layout
-| Folder | Contents |
-|---|---|
-| `learning/` | Fundamentals, one step per folder (gates, mux, adders, counter) |
-| `rtl/` | Final designs |
-| `tb/` | Verilog testbenches |
-| `model/` | Python golden model, test-vector generation, comparison, bit-flip analysis |
-| `tests/` | Python tests of the golden model and analysis |
-| `synth/` | Synthesis scripts |
-| `scripts/` | Reproducible simulation and synthesis commands |
-| `results/` | Final summary tables and charts |
-| `build/` | Generated files (not committed) |
+```
+python model/reference.py
+iverilog -g2005 -o build/tb_dp.vvp rtl/dot_parallel.v tb/tb_dot_parallel.v
+vvp build/tb_dp.vvp
+scripts/synth_precision.sh
+```
 
-## Author
+Needs Icarus Verilog, Yosys and Python with NumPy.
+
+## Structure
+
+- `learning/` six small steps from an AND gate to an accumulator, each with a self-checking testbench
+- `model/reference.py` reference model and test vectors
+- `rtl/` designs
+- `tb/` testbenches
+
+## Next
+
+- Serial version: one multiplier reused over four cycles, to compare speed with hardware cost
+- Ternary weights (−1, 0, +1): the multiplication becomes add, subtract or skip
+- Bit-flip sensitivity: how much one flipped weight bit changes the result
+
+Results are from simulation only, not from FPGA measurements.
+
 Mahdi Ahmadi
