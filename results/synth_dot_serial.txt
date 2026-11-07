@@ -1,0 +1,19 @@
+
+3. Printing statistics.
+
+=== dot_serial ===
+
+        +----------Local Count, excluding submodules.
+        | 
+      190 wires
+      598 wire bits
+      190 public wires
+      598 public wire bits
+        8 ports
+       87 port bits
+      368 cells
+       12   SB_CARRY
+       38   SB_DFFESR
+        2   SB_DFFSR
+      316   SB_LUT4
+

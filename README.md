@@ -12,6 +12,8 @@ Each halving of the bit width cuts the logic by about 4× (883 → 224 → 55 LU
 - All 1024 test vectors match the reference model, including the corner cases
   (−128 × −128, mixed extremes, −1).
 - Latency 1 cycle, throughput 1 result per cycle (simulation).
+- `rtl/dot_serial.v` reuses one multiplier over four cycles: 5 cycles per result,
+  all 1024 vectors match as well.
 
 Why 18 bits: one product needs 16 bits (−128 × −128 = 16384), and adding four
 products needs 2 more, so the sum can never overflow.
@@ -32,13 +34,30 @@ with the square of its width. The flip-flops only hold the result, so they
 shrink linearly (18, 10 and 6 bits plus a valid flag). These are synthesis
 estimates, not board measurements.
 
+## Parallel vs serial
+
+The same INT8 dot product built two ways (`scripts/synth_compare.sh`, same Yosys flow):
+
+| Design | Multipliers | Cycles per result | LUTs | Flip-flops |
+|---|---:|---:|---:|---:|
+| `dot_parallel` | 4 | 1 | 883 | 19 |
+| `dot_serial` | 1 | 5 | 316 | 40 |
+
+The serial design needs 2.8× fewer LUTs but is 5× slower, so it uses more
+hardware per result (316 × 5 vs 883 × 1). It saves area, not efficiency.
+It reads one activation and one weight per cycle instead of four of each,
+and needs more flip-flops for its accumulator, counter and control.
+
 ## Run
 
 ```
 python model/reference.py
 iverilog -g2005 -o build/tb_dp.vvp rtl/dot_parallel.v tb/tb_dot_parallel.v
 vvp build/tb_dp.vvp
+iverilog -g2005 -o build/tb_ds.vvp rtl/dot_serial.v tb/tb_dot_serial.v
+vvp build/tb_ds.vvp
 scripts/synth_precision.sh
+scripts/synth_compare.sh
 ```
 
 Needs Icarus Verilog, Yosys and Python with NumPy.
@@ -52,7 +71,6 @@ Needs Icarus Verilog, Yosys and Python with NumPy.
 
 ## Next
 
-- Serial version: one multiplier reused over four cycles, to compare speed with hardware cost
 - Ternary weights (−1, 0, +1): the multiplication becomes add, subtract or skip
 - Bit-flip sensitivity: how much one flipped weight bit changes the result
 
