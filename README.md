@@ -51,13 +51,9 @@ and needs more flip-flops for its accumulator, counter and control.
 ## Run
 
 ```
-python model/reference.py
-iverilog -g2005 -o build/tb_dp.vvp rtl/dot_parallel.v tb/tb_dot_parallel.v
-vvp build/tb_dp.vvp
-iverilog -g2005 -o build/tb_ds.vvp rtl/dot_serial.v tb/tb_dot_serial.v
-vvp build/tb_ds.vvp
-scripts/synth_precision.sh
-scripts/synth_compare.sh
+scripts/run_sim.sh          # reference vectors + both testbenches
+scripts/synth_precision.sh  # hardware cost at 8, 4 and 2 bits
+scripts/synth_compare.sh    # parallel vs serial
 ```
 
 Needs Icarus Verilog, Yosys and Python with NumPy.
